@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1A2536">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="NISA×iDeCo">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<title>NISA / iDeCo 最適化シミュレーター</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#F2F5F8;
+  --card:#FFFFFF;
+  --ink:#1A2536;
+  --ink-soft:#4B586C;
+  --line:#DDE4EC;
+  --nisa-t:#2F8F6B;
+  --nisa-g:#1F6B4E;
+  --ideco:#3D6DAA;
+  --ideco-2:#6E93C4;
+  --gold:#B8892E;
+  --taxable:#98A2B1;
+  --danger:#B4562E;
+  --radius:14px;
+  --serif:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho","BIZ UDMincho",serif;
+  --sans:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic","Noto Sans JP",-apple-system,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:14.5px;
+  line-height:1.65;
+  font-feature-settings:"palt";
+}
+.wrap{max-width:1180px;margin:0 auto;padding:calc(20px + env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) calc(56px + env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left))}
+
+/* ---------- header ---------- */
+header{margin-bottom:26px}
+.eyebrow{
+  font-size:11px;letter-spacing:.24em;color:var(--ink-soft);
+  text-transform:uppercase;margin-bottom:6px;
+}
+h1{
+  font-family:var(--serif);
+  font-size:clamp(24px,3.4vw,34px);
+  font-weight:600;letter-spacing:.04em;line-height:1.3;
+}
+h1 .amp{color:var(--gold);font-style:italic;padding:0 .1em}
+.lede{color:var(--ink-soft);margin-top:8px;max-width:56em}
+
+/* ---------- layout ---------- */
+.grid{display:grid;grid-template-columns:340px 1fr;gap:22px;align-items:start}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.panel{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:20px 20px 22px;
+}
+.inputs{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow-y:auto}
+@media(max-width:900px){.inputs{position:static;max-height:none}}
+.results{display:flex;flex-direction:column;gap:22px}
+
+/* ---------- input controls ---------- */
+.sec{margin-bottom:20px}
+.sec:last-child{margin-bottom:0}
+.sec-label{
+  font-family:var(--serif);font-size:13px;font-weight:600;letter-spacing:.14em;
+  border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:12px;
+  display:flex;justify-content:space-between;align-items:baseline;
+}
+.field{margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+.field label{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;color:var(--ink-soft);margin-bottom:4px}
+.field .val{font-family:var(--serif);font-size:15px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+input[type=range]{
+  width:100%;height:26px;appearance:none;-webkit-appearance:none;background:transparent;cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:5px;border-radius:3px;background:linear-gradient(to right,var(--ink) var(--fill,50%),var(--line) var(--fill,50%))}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:18px;height:18px;border-radius:50%;
+  background:var(--card);border:2.5px solid var(--ink);margin-top:-6.5px;
+}
+input[type=range]::-moz-range-track{height:5px;border-radius:3px;background:var(--line)}
+input[type=range]::-moz-range-progress{height:5px;border-radius:3px;background:var(--ink)}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--card);border:2.5px solid var(--ink)}
+input[type=range]:focus-visible{outline:2px solid var(--ideco);outline-offset:4px;border-radius:4px}
+select{
+  width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;
+  font-family:var(--sans);font-size:13px;color:var(--ink);background:var(--card);
+}
+select:focus-visible{outline:2px solid var(--ideco)}
+.seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.seg button{
+  flex:1;padding:7px 4px;font-size:12px;border:none;background:var(--card);color:var(--ink-soft);
+  cursor:pointer;font-family:var(--sans);line-height:1.3;
+}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed=true]{background:var(--ink);color:#fff;font-weight:600}
+.seg button:focus-visible{outline:2px solid var(--ideco);outline-offset:-2px}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px}
+.switch{position:relative;width:40px;height:22px;flex:none}
+.switch input{opacity:0;width:100%;height:100%;position:absolute;cursor:pointer;margin:0}
+.switch .knob{
+  position:absolute;inset:0;border-radius:12px;background:var(--line);transition:background .15s;pointer-events:none;
+}
+.switch .knob::after{
+  content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;
+  background:#fff;transition:transform .15s;box-shadow:0 1px 2px rgba(0,0,0,.25);
+}
+.switch input:checked+.knob{background:var(--ink)}
+.switch input:checked+.knob::after{transform:translateX(18px)}
+.switch input:focus-visible+.knob{outline:2px solid var(--ideco);outline-offset:2px}
+.stepper{display:flex;align-items:center;gap:12px}
+.stepper button{
+  width:30px;height:30px;border-radius:50%;border:1.5px solid var(--ink);background:var(--card);
+  font-size:16px;cursor:pointer;color:var(--ink);line-height:1;
+}
+.stepper button:disabled{opacity:.3;cursor:default}
+.stepper .num{font-family:var(--serif);font-size:17px;font-weight:600;min-width:3.2em;text-align:center}
+.hint{font-size:11px;color:var(--ink-soft);margin-top:4px;line-height:1.5}
+.spouse-fields{border-left:2.5px solid var(--line);padding-left:12px;margin-top:12px}
+.spouse-fields.off{display:none}
+
+/* ---------- allocation ---------- */
+.result-h{
+  font-family:var(--serif);font-size:15px;font-weight:600;letter-spacing:.1em;margin-bottom:4px;
+  display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px;
+}
+.result-h small{font-family:var(--sans);font-size:11px;color:var(--ink-soft);font-weight:400;letter-spacing:0}
+.allocbar{display:flex;height:34px;border-radius:9px;overflow:hidden;margin:12px 0 14px;border:1px solid var(--line)}
+.allocbar div{transition:flex-grow .35s ease;min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px 14px}
+.chip{display:flex;align-items:baseline;gap:7px;font-size:12.5px}
+.chip .sw{width:11px;height:11px;border-radius:3px;flex:none;transform:translateY(1px)}
+.chip .amt{font-family:var(--serif);font-weight:600;font-variant-numeric:tabular-nums}
+.chip .who{color:var(--ink-soft);font-size:11px}
+
+/* ---------- summary cards ---------- */
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:900px){.cards{grid-template-columns:repeat(2,1fr)}}
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:14px 16px;
+}
+.card .k{font-size:11px;color:var(--ink-soft);letter-spacing:.06em;margin-bottom:2px}
+.card .v{font-family:var(--serif);font-size:clamp(19px,2.2vw,24px);font-weight:600;font-variant-numeric:tabular-nums;line-height:1.25}
+.card .v small{font-size:.6em;font-weight:500;margin-left:1px}
+.card .sub{font-size:10.5px;color:var(--ink-soft);margin-top:3px;line-height:1.45}
+.card.gold .v{color:var(--gold)}
+.card.green .v{color:var(--nisa-g)}
+
+/* ---------- chart ---------- */
+.chart-wrap{position:relative;height:340px;margin-top:10px}
+@media(max-width:640px){.chart-wrap{height:280px}}
+
+/* ---------- quota frames (signature) ---------- */
+.quota-block{margin-top:14px}
+.quota-row{margin-bottom:16px}
+.quota-row:last-child{margin-bottom:0}
+.quota-title{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;margin-bottom:6px}
+.quota-title b{font-family:var(--serif);letter-spacing:.06em}
+.quota-title span{color:var(--ink-soft);font-size:11.5px;font-variant-numeric:tabular-nums}
+.frames{display:grid;grid-template-columns:repeat(18,1fr);gap:3px}
+@media(max-width:640px){.frames{grid-template-columns:repeat(9,1fr)}}
+.frame{
+  aspect-ratio:1.6/1;border:1px solid var(--line);border-radius:3px;position:relative;overflow:hidden;background:var(--card);
+}
+.frame .fillT,.frame .fillG{position:absolute;top:0;bottom:0}
+.frame .fillT{left:0;background:var(--nisa-t)}
+.frame .fillG{background:var(--nisa-g)}
+.quota-ideco{display:flex;align-items:center;gap:10px}
+.quota-ideco .bar{flex:1;height:10px;border-radius:5px;background:var(--line);overflow:hidden}
+.quota-ideco .bar div{height:100%;background:var(--ideco);border-radius:5px;transition:width .35s ease}
+.quota-ideco .pct{font-size:11.5px;color:var(--ink-soft);font-variant-numeric:tabular-nums;min-width:8.5em;text-align:right}
+
+/* ---------- advice / notes ---------- */
+.advice{border-left:3px solid var(--gold);padding:2px 0 2px 14px;font-size:13px;color:var(--ink);margin-top:6px}
+.advice p{margin-bottom:6px}
+.advice p:last-child{margin-bottom:0}
+details.notes{margin-top:4px}
+details.notes summary{cursor:pointer;font-size:12px;color:var(--ink-soft);letter-spacing:.04em}
+details.notes .body{font-size:11.5px;color:var(--ink-soft);line-height:1.75;margin-top:8px}
+footer{margin-top:34px;font-size:11px;color:var(--ink-soft);border-top:1px solid var(--line);padding-top:12px;line-height:1.7}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="eyebrow">Household Tax-Advantaged Account Optimizer</div>
+  <h1>NISA <span class="amp">&</span> iDeCo 最適化シミュレーター</h1>
+  <p class="lede">家族構成・年収・毎月の投資可能額から、非課税枠と所得控除メリットを最も活かせる配分を自動計算し、将来の資産推移を描きます。数値を動かすと即座に再計算されます。</p>
+</header>
+
+<div class="grid">
+<!-- ================= INPUTS ================= -->
+<div class="panel inputs">
+
+  <div class="sec">
+    <div class="sec-label">世帯の状況</div>
+    <div class="field">
+      <label for="incomeSelf">本人の年収（税込）<span class="val" id="incomeSelfVal"></span></label>
+      <input type="range" id="incomeSelf" min="1000000" max="25000000" step="100000" value="8000000">
+    </div>
+    <div class="field">
+      <label for="jobSelf">本人の職業区分（iDeCo限度額）</label>
+      <select id="jobSelf">
+        <option value="kaishain_nashi">会社員（企業年金なし）</option>
+        <option value="kaishain_ari" selected>会社員（企業年金あり）</option>
+        <option value="koumuin">公務員</option>
+        <option value="jieigyo">自営業・フリーランス</option>
+        <option value="none">iDeCoに加入しない</option>
+      </select>
+    </div>
+    <div class="toggle-row field">
+      <span>配偶者</span>
+      <label class="switch"><input type="checkbox" id="hasSpouse" checked><span class="knob"></span></label>
+    </div>
+    <div class="spouse-fields" id="spouseFields">
+      <div class="field">
+        <label for="incomeSpouse">配偶者の年収<span class="val" id="incomeSpouseVal"></span></label>
+        <input type="range" id="incomeSpouse" min="0" max="25000000" step="100000" value="4000000">
+      </div>
+      <div class="field">
+        <label for="jobSpouse">配偶者の職業区分</label>
+        <select id="jobSpouse">
+          <option value="kaishain_nashi" selected>会社員（企業年金なし）</option>
+          <option value="kaishain_ari">会社員（企業年金あり）</option>
+          <option value="koumuin">公務員</option>
+          <option value="jieigyo">自営業・フリーランス</option>
+          <option value="shufu">専業主婦（夫）・第3号</option>
+          <option value="none">iDeCoに加入しない</option>
+        </select>
+      </div>
+    </div>
+    <div class="field" style="margin-top:14px">
+      <label for="age">本人の年齢<span class="val" id="ageVal"></span></label>
+      <input type="range" id="age" min="20" max="70" step="1" value="40">
+      <div class="hint">配偶者も同年齢と仮定。iDeCoの掛金拠出は65歳になるまでとし、以降は自動でNISA・課税口座へ振り替えます。</div>
+    </div>
+    <div class="field">
+      <label>子どもの人数</label>
+      <div class="stepper">
+        <button id="kidsMinus" aria-label="減らす">−</button>
+        <span class="num" id="kidsNum">2人</span>
+        <button id="kidsPlus" aria-label="増やす">＋</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-label">投資の前提</div>
+    <div class="field">
+      <label for="budget">毎月の投資可能額（世帯合計）<span class="val" id="budgetVal"></span></label>
+      <input type="range" id="budget" min="0" max="600000" step="5000" value="150000">
+    </div>
+    <div class="field">
+      <label for="lump">一括投資額（開始時に投入）<span class="val" id="lumpVal"></span></label>
+      <input type="range" id="lump" min="0" max="30000000" step="100000" value="0">
+      <div class="hint">初月に課税口座で運用を始め、NISAの空き枠（年360万円/人ペース）とiDeCoの掛金へ毎月自動で移し替えます。</div>
+    </div>
+    <div class="field">
+      <label for="ret">想定利回り（年率）<span class="val" id="retVal"></span></label>
+      <input type="range" id="ret" min="0" max="10" step="0.5" value="5">
+      <div class="hint">参考：全世界株式インデックスの長期期待リターンは概ね4〜6%程度とされます。</div>
+    </div>
+    <div class="field">
+      <label>シミュレーション期間</label>
+      <div class="seg" id="yearsSeg" role="group" aria-label="期間">
+        <button data-y="10">10年</button>
+        <button data-y="20" aria-pressed="true">20年</button>
+        <button data-y="30">30年</button>
+        <button data-y="40">40年</button>
+        <button data-y="50">50年</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-label">配分方針</div>
+    <div class="field">
+      <div class="seg" id="modeSeg" role="group" aria-label="方針">
+        <button data-m="tax" aria-pressed="true">節税<br>最大化</button>
+        <button data-m="balance">バランス</button>
+        <button data-m="liquid">流動性<br>重視</button>
+      </div>
+      <div class="hint" id="modeHint"></div>
+    </div>
+    <div class="toggle-row field">
+      <span style="font-size:12.5px">2027年施行予定の<br>iDeCo限度額引上げを反映</span>
+      <label class="switch"><input type="checkbox" id="reform2027"><span class="knob"></span></label>
+    </div>
+    <div class="hint">引上げ後：自営業 月7.5万円／会社員・公務員 月6.2万円（事業主掛金ゼロと仮定）。第3号は据置き。</div>
+  </div>
+</div>
+
+<!-- ================= RESULTS ================= -->
+<div class="results">
+
+  <div class="panel">
+    <div class="result-h">毎月の推奨配分 <small id="allocNote"></small></div>
+    <div class="allocbar" id="allocBar"></div>
+    <div class="chips" id="allocChips"></div>
+  </div>
+
+  <div class="cards" id="cards"></div>
+
+  <div class="panel">
+    <div class="result-h">資産推移 <small>年末時点の評価額（税引前）・積み上げ表示</small></div>
+    <div class="chart-wrap"><canvas id="chart"></canvas></div>
+  </div>
+
+  <div class="panel">
+    <div class="result-h">非課税枠の使用状況 <small id="quotaNote"></small></div>
+    <div class="quota-block" id="quotaBlock"></div>
+  </div>
+
+  <div class="panel">
+    <div class="result-h">この条件でのポイント</div>
+    <div class="advice" id="advice"></div>
+    <details class="notes">
+      <summary>計算の前提・免責事項</summary>
+      <div class="body">
+        ・税額は給与所得控除（令和2年分以降）・社会保険料（年収の約14.5%と概算、上限230万円）・基礎控除（所得税48万円／住民税43万円）のみを考慮した概算です。扶養控除・住宅ローン控除等は反映していません。自営業の方は給与所得者と同じ簡便計算を用いているため、実際とは差が生じます。<br>
+        ・iDeCoの節税額は掛金の小規模企業共済等掛金控除による所得税（復興特別所得税含む）＋住民税の軽減額です。口座管理手数料は月171円（最安水準）、加入時手数料2,829円を控除しています。60歳まで引き出せない点、受取時に退職所得控除・公的年金等控除の枠を超えると課税される点は反映していません。<br>
+        ・NISAは年間360万円（つみたて投資枠120万円＋成長投資枠240万円）、生涯1,800万円（うち成長投資枠1,200万円）を一人あたりの上限としています。売却による枠の復活は考慮していません。<br>
+        ・課税口座は売却時に運用益へ20.315%課税されるものとして「実質」欄で調整しています。リターンは毎年一定と仮定しており、実際の市場変動・元本割れリスクは反映されません。<br>
+        ・2027年のiDeCo限度額引上げは2025年度税制改正大綱等に基づく予定値であり、企業年金加入者は「月6.2万円から事業主掛金を控除した額」が実際の上限です（本ツールでは事業主掛金ゼロと仮定）。<br>
+        ・一括投資額は初月に課税口座へ全額投入し、非課税枠の空きに応じて毎月移し替える前提です。移し替え時は含み益部分に20.315%課税した後の金額を枠へ投入します。<br>
+        ・iDeCoの掛金拠出は本人・配偶者とも65歳になるまでとし、年齢は本人と同一と仮定しています。受給開始年齢や拠出可能年齢の個別要件は反映していません。<br>
+        ・本ツールは情報提供を目的とした概算シミュレーションであり、特定の金融商品の勧誘や投資助言・税務助言ではありません。実際の判断にあたっては最新の制度と専門家の助言をご確認ください。
+      </div>
+    </details>
+  </div>
+
+</div>
+</div>
+<footer>NISA / iDeCo 最適化シミュレーター — 制度は変更される可能性があります。金額はすべて概算です。</footer>
+
+<script>
+"use strict";
+/* ================= state ================= */
+const S = {
+  incomeSelf: 8000000,
+  incomeSpouse: 4000000,
+  hasSpouse: true,
+  jobSelf: "kaishain_ari",
+  jobSpouse: "kaishain_nashi",
+  kids: 2,
+  budget: 150000,
+  lump: 0,
+  age: 40,
+  ret: 0.05,
+  years: 20,
+  mode: "tax",
+  reform2027: false,
+};
+
+const IDECO_LIMITS = {
+  jieigyo:       {now: 68000, later: 75000},
+  kaishain_nashi:{now: 23000, later: 62000},
+  kaishain_ari:  {now: 20000, later: 62000},
+  koumuin:       {now: 20000, later: 62000},
+  shufu:         {now: 23000, later: 23000},
+  none:          {now: 0,     later: 0},
+};
+const NISA_LIFE = 18000000, NISA_GROWTH_LIFE = 12000000;
+const NISA_T_MONTH = 100000, NISA_G_MONTH = 200000;
+const IDECO_FEE_M = 171, IDECO_FEE_JOIN = 2829, CGT = 0.20315;
+
+/* ================= tax helpers ================= */
+function salaryDeduction(y){
+  if (y <= 1625000) return 550000;
+  if (y <= 1800000) return y*0.4 - 100000;
+  if (y <= 3600000) return y*0.3 + 80000;
+  if (y <= 6600000) return y*0.2 + 440000;
+  if (y <= 8500000) return y*0.1 + 1100000;
+  return 1950000;
+}
+function taxableIncome(income, basic){
+  if (income <= 0) return 0;
+  const shakai = Math.min(income*0.145, 2300000);
+  return Math.max(0, income - salaryDeduction(income) - shakai - basic);
+}
+function nationalTax(t){
+  const br = [
+    [1949000,.05,0],[3299000,.10,97500],[6949000,.20,427500],
+    [8999000,.23,636000],[17999000,.33,1536000],[39999000,.40,2796000],[Infinity,.45,4796000]
+  ];
+  for (const [mx,r,d] of br) if (t <= mx) return Math.max(0, t*r - d);
+}
+function annualTaxSaving(income, contrib){
+  if (income <= 0 || contrib <= 0) return 0;
+  const tN = taxableIncome(income, 480000);
+  const tR = taxableIncome(income, 430000);
+  const natl = (nationalTax(tN) - nationalTax(Math.max(0, tN - contrib))) * 1.021;
+  const resi = Math.min(tR, contrib) * 0.10;
+  return natl + resi;
+}
+function marginalRate(income){
+  const t = taxableIncome(income, 480000);
+  if (t <= 0) return 0;
+  let r = .05;
+  if (t > 1949000) r = .10;
+  if (t > 3299000) r = .20;
+  if (t > 6949000) r = .23;
+  if (t > 8999000) r = .33;
+  if (t > 17999000) r = .40;
+  if (t > 39999000) r = .45;
+  return r*1.021 + 0.10;
+}
+
+/* ================= allocation ================= */
+function personCfg(){
+  const key = S.reform2027 ? "later" : "now";
+  const arr = [{
+    id:"self", label:"本人", income:S.incomeSelf,
+    ideco: IDECO_LIMITS[S.jobSelf][key],
+    mr: marginalRate(S.incomeSelf),
+  }];
+  if (S.hasSpouse) arr.push({
+    id:"spouse", label:"配偶者", income:S.incomeSpouse,
+    ideco: IDECO_LIMITS[S.jobSpouse][key],
+    mr: marginalRate(S.incomeSpouse),
+  });
+  return arr;
+}
+
+/* bucket list in priority order for the current mode */
+function buildBuckets(persons, caps, idecoOpen){
+  const idecoB = p => ({ key:"ideco_"+p.id, kind:"ideco", p,
+    room(al){ return idecoOpen ? Math.max(0, p.ideco - (al[this.key]||0)) : 0; },
+    put(al, amt){ al[this.key] = (al[this.key]||0) + amt; } });
+  const tB = p => ({ key:"nisaT_"+p.id, kind:"nisa", p,
+    room(al){ return Math.max(0, Math.min(NISA_T_MONTH - (al[this.key]||0), NISA_LIFE - caps[p.id].total)); },
+    put(al, amt){ al[this.key] = (al[this.key]||0) + amt; caps[p.id].total += amt; } });
+  const gB = p => ({ key:"nisaG_"+p.id, kind:"nisa", p,
+    room(al){ return Math.max(0, Math.min(NISA_G_MONTH - (al[this.key]||0), NISA_LIFE - caps[p.id].total, NISA_GROWTH_LIFE - caps[p.id].growth)); },
+    put(al, amt){ al[this.key] = (al[this.key]||0) + amt; caps[p.id].total += amt; caps[p.id].growth += amt; } });
+
+  const byMR = [...persons].sort((a,b)=>b.mr-a.mr);
+  const idecoTaxed = byMR.filter(p=>p.ideco>0 && p.mr>0).map(idecoB);
+  const idecoZero  = persons.filter(p=>p.ideco>0 && p.mr<=0).map(idecoB);
+  const nisaT = persons.map(tB), nisaG = persons.map(gB);
+  if (S.mode === "tax")     return [...idecoTaxed, ...nisaT, ...nisaG, ...idecoZero];
+  if (S.mode === "balance") return [...idecoTaxed.slice(0,1), ...nisaT, ...nisaG, ...idecoTaxed.slice(1), ...idecoZero];
+  return [...nisaT, ...nisaG, ...idecoTaxed, ...idecoZero];
+}
+
+/* pass 1: allocate this month's cash budget */
+function allocateCash(buckets, cash){
+  const al = {}; let rest = cash;
+  for (const b of buckets){
+    if (rest <= 0) break;
+    let a = Math.min(rest, b.room(al));
+    if (b.kind === "ideco"){ a = Math.floor(a/1000)*1000; if (a < 5000) a = 0; }
+    if (a > 0){ b.put(al, a); rest -= a; }
+  }
+  al.taxable = Math.max(0, rest);
+  return al;
+}
+
+/* ================= simulation ================= */
+function simulate(){
+  const persons = personCfg();
+  const mRate = Math.pow(1 + S.ret, 1/12) - 1;
+  const months = S.years * 12;
+
+  const caps = {}; persons.forEach(p => caps[p.id] = {total:0, growth:0});
+  const bal = {taxable:0};
+  persons.forEach(p => { bal["nisa_"+p.id]=0; bal["ideco_"+p.id]=0; });
+  let taxBasis = 0, principal = 0, savingsCum = 0;
+  const idecoJoined = {}, idecoAnnual = {};
+  persons.forEach(p => idecoAnnual[p.id]=0);
+
+  let baseline = 0, baseBasis = 0;
+  const snaps = [];
+  let firstAlloc = null;
+  const capReachedYear = {};
+
+  /* proportional-basis sale from the taxable account; returns net proceeds after CGT */
+  function sellTaxable(gross){
+    const x = Math.min(gross, bal.taxable);
+    if (x <= 0 || bal.taxable <= 0) return 0;
+    const basisPart = taxBasis * (x / bal.taxable);
+    const tax = Math.max(0, x - basisPart) * CGT;
+    bal.taxable -= x; taxBasis -= basisPart;
+    return x - tax;
+  }
+
+  /* pass 2: move waiting funds in the taxable account into unused tax-advantaged room */
+  function drainPool(buckets, al){
+    for (const b of buckets){
+      if (bal.taxable <= 1) break;
+      const R = b.room(al);
+      if (R <= 0) continue;
+      const ratio = 1 - Math.max(0, 1 - taxBasis / bal.taxable) * CGT;
+      let targetNet = Math.min(R, bal.taxable * ratio);
+      if (b.kind === "ideco"){
+        targetNet = Math.floor(targetNet/1000)*1000;
+        if ((al[b.key]||0) + targetNet < 5000) continue;
+      }
+      if (targetNet <= 0) continue;
+      const gross = Math.min(bal.taxable, targetNet / ratio);
+      const net = sellTaxable(gross);
+      const put = Math.min(net, R);
+      if (put > 0) b.put(al, put);
+      const back = net - put;
+      if (back > 0){ bal.taxable += back; taxBasis += back; }
+    }
+  }
+
+  for (let m = 1; m <= months; m++){
+    // grow existing balances
+    for (const k in bal) bal[k] *= (1 + mRate);
+    baseline *= (1 + mRate);
+
+    // lump sum arrives in month 1 (invested in the taxable account first)
+    if (m === 1 && S.lump > 0){
+      bal.taxable += S.lump; taxBasis += S.lump;
+      principal += S.lump;
+      baseline += S.lump; baseBasis += S.lump;
+    }
+
+    const age = S.age + (m - 1) / 12;
+    const idecoOpen = age < 65;
+    const buckets = buildBuckets(persons, caps, idecoOpen);
+    const alloc = allocateCash(buckets, S.budget);
+    bal.taxable += alloc.taxable; taxBasis += alloc.taxable;
+    drainPool(buckets, alloc);
+    if (!firstAlloc) firstAlloc = {...alloc};
+
+    for (const p of persons){
+      const ic = alloc["ideco_"+p.id] || 0;
+      if (ic > 0){
+        if (!idecoJoined[p.id]){ bal["ideco_"+p.id] -= IDECO_FEE_JOIN; idecoJoined[p.id] = true; }
+        bal["ideco_"+p.id] += ic - IDECO_FEE_M;
+        idecoAnnual[p.id] += ic;
+      }
+      bal["nisa_"+p.id] += (alloc["nisaT_"+p.id]||0) + (alloc["nisaG_"+p.id]||0);
+      if (!capReachedYear[p.id] && caps[p.id].total >= NISA_LIFE - 1) capReachedYear[p.id] = Math.ceil(m/12);
+    }
+    principal += S.budget;
+    baseline += S.budget; baseBasis += S.budget;
+
+    if (m % 12 === 0){
+      for (const p of persons){
+        savingsCum += annualTaxSaving(p.income, idecoAnnual[p.id]);
+        idecoAnnual[p.id] = 0;
+      }
+      snaps.push({
+        year: m/12,
+        nisa_self:  bal.nisa_self  || 0,
+        nisa_spouse:bal.nisa_spouse|| 0,
+        ideco_self: bal.ideco_self || 0,
+        ideco_spouse:bal.ideco_spouse||0,
+        taxable: bal.taxable,
+        principal, savingsCum,
+      });
+    }
+  }
+
+  const last = snaps[snaps.length-1];
+  const total = last.nisa_self + (last.nisa_spouse||0) + last.ideco_self + (last.ideco_spouse||0) + last.taxable;
+  const taxGain = Math.max(0, last.taxable - taxBasis);
+  const netPlan = total - taxGain*CGT + savingsCum;
+  const baseGain = Math.max(0, baseline - baseBasis);
+  const netBase = baseline - baseGain*CGT;
+
+  return {persons, snaps, caps, firstAlloc, capReachedYear,
+          total, principal, savingsCum, netPlan, netBase, gain: total - principal};
+}
+
+/* ================= formatting ================= */
+const fmtMan = v => {
+  const man = v/10000;
+  if (Math.abs(man) >= 10000) return (man/10000).toLocaleString("ja-JP",{maximumFractionDigits:2}) + "億円";
+  return Math.round(man).toLocaleString("ja-JP") + "万円";
+};
+const fmtYen = v => Math.round(v).toLocaleString("ja-JP") + "円";
+
+/* ================= rendering ================= */
+const COLORS = {
+  nisaT_self:"#2F8F6B", nisaG_self:"#1F6B4E",
+  nisaT_spouse:"#63B893", nisaG_spouse:"#3E8E6B",
+  ideco_self:"#3D6DAA", ideco_spouse:"#6E93C4",
+  taxable:"#98A2B1",
+};
+const LBL = {
+  nisaT_self:"NISAつみたて（本人）", nisaG_self:"NISA成長（本人）",
+  nisaT_spouse:"NISAつみたて（配偶者）", nisaG_spouse:"NISA成長（配偶者）",
+  ideco_self:"iDeCo（本人）", ideco_spouse:"iDeCo（配偶者）",
+  taxable:"課税口座",
+};
+
+function renderAlloc(r){
+  const bar = document.getElementById("allocBar");
+  const chips = document.getElementById("allocChips");
+  bar.innerHTML = ""; chips.innerHTML = "";
+  const order = ["ideco_self","ideco_spouse","nisaT_self","nisaG_self","nisaT_spouse","nisaG_spouse","taxable"];
+  let shown = 0;
+  for (const k of order){
+    const v = r.firstAlloc[k] || 0;
+    if (v <= 0) continue;
+    shown += v;
+    const seg = document.createElement("div");
+    seg.style.flexGrow = v; seg.style.background = COLORS[k];
+    seg.title = LBL[k] + " " + fmtYen(v);
+    bar.appendChild(seg);
+    const c = document.createElement("div");
+    c.className = "chip";
+    c.innerHTML = `<span class="sw" style="background:${COLORS[k]}"></span>
+      <span>${LBL[k]}</span><span class="amt">${fmtYen(v)}</span>`;
+    chips.appendChild(c);
+  }
+  if (shown <= 0){
+    bar.innerHTML = `<div style="flex-grow:1;background:var(--line)"></div>`;
+    chips.innerHTML = `<div class="chip"><span>毎月の投資額と一括投資額がともに0です。スライダーを動かしてください。</span></div>`;
+  }
+  const lumpNote = S.lump > 0 ? "・一括分の移し替え含む" : "";
+  document.getElementById("allocNote").textContent =
+    `開始月・積立${fmtYen(S.budget)}の内訳${lumpNote}（枠の消化に応じて自動で組み替え）`;
+}
+
+function renderCards(r){
+  const el = document.getElementById("cards");
+  const adv = r.netPlan - r.netBase;
+  el.innerHTML = `
+    <div class="card"><div class="k">${S.years}年後の総資産</div>
+      <div class="v">${fmtMan(r.total)}</div>
+      <div class="sub">投資元本 ${fmtMan(r.principal)}</div></div>
+    <div class="card green"><div class="k">うち運用益</div>
+      <div class="v">${fmtMan(r.gain)}</div>
+      <div class="sub">非課税口座分は課税されません</div></div>
+    <div class="card gold"><div class="k">iDeCo累計節税額</div>
+      <div class="v">${fmtMan(r.savingsCum)}</div>
+      <div class="sub">所得税＋住民税の軽減（概算）</div></div>
+    <div class="card"><div class="k">全額課税口座との差</div>
+      <div class="v">＋${fmtMan(adv)}</div>
+      <div class="sub">売却時課税・節税額まで含めた実質ベース</div></div>`;
+}
+
+let chart;
+function renderChart(r){
+  const labels = r.snaps.map(s => s.year + "年");
+  const mk = (key,label,color) => ({
+    label, data: r.snaps.map(s => Math.max(0, Math.round((s[key]||0)/10000))),
+    borderColor: color, backgroundColor: color + "B3",
+    fill:true, stack:"assets", pointRadius:0, borderWidth:1, tension:.25, order:2,
+  });
+  const datasets = [
+    mk("ideco_self", LBL.ideco_self, COLORS.ideco_self),
+    ...(S.hasSpouse ? [mk("ideco_spouse", LBL.ideco_spouse, COLORS.ideco_spouse)] : []),
+    mk("nisa_self", "NISA（本人）", COLORS.nisaT_self),
+    ...(S.hasSpouse ? [mk("nisa_spouse", "NISA（配偶者）", COLORS.nisaT_spouse)] : []),
+    mk("taxable", LBL.taxable, COLORS.taxable),
+    { label:"投資元本", data:r.snaps.map(s=>Math.round(s.principal/10000)),
+      borderColor:"#1A2536", borderDash:[6,4], borderWidth:1.5, pointRadius:0, fill:false, order:1 },
+    { label:"累計節税額", data:r.snaps.map(s=>Math.round(s.savingsCum/10000)),
+      borderColor:"#B8892E", borderWidth:2, pointRadius:0, fill:false, order:0, tension:.25 },
+  ];
+  const opts = {
+    responsive:true, maintainAspectRatio:false, animation:{duration:250},
+    interaction:{mode:"index", intersect:false},
+    scales:{
+      x:{grid:{display:false}, ticks:{font:{size:11}, maxTicksLimit:11}},
+      y:{stacked:true, ticks:{font:{size:11}, callback:v=>v.toLocaleString()+"万"}, grid:{color:"#E7ECF2"}},
+    },
+    plugins:{
+      legend:{position:"bottom", labels:{boxWidth:10, boxHeight:10, font:{size:11}, padding:12}},
+      tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y.toLocaleString()}万円`}},
+    },
+  };
+  if (chart){ chart.data.labels = labels; chart.data.datasets = datasets; chart.options = opts; chart.update(); }
+  else chart = new Chart(document.getElementById("chart"), {type:"line", data:{labels, datasets}, options:opts});
+}
+
+function renderQuota(r){
+  const el = document.getElementById("quotaBlock");
+  el.innerHTML = "";
+  for (const p of r.persons){
+    const cap = r.caps[p.id];
+    const row = document.createElement("div");
+    row.className = "quota-row";
+    const growth = cap.growth, tsumi = cap.total - cap.growth;
+    let frames = "";
+    for (let i = 0; i < 18; i++){
+      const lo = i*1000000, hi = lo + 1000000;
+      const tW = Math.max(0, Math.min(tsumi, hi) - lo) / 10000; // % of 100万
+      const gLo = Math.max(lo, tsumi), gAmt = Math.max(0, Math.min(tsumi+growth, hi) - Math.max(gLo, lo));
+      const gW = gAmt / 10000;
+      const tLeft = 0, gLeft = tW;
+      frames += `<div class="frame">
+        <div class="fillT" style="left:0;width:${tW}%"></div>
+        <div class="fillG" style="left:${gLeft}%;width:${gW}%"></div></div>`;
+    }
+    const reached = r.capReachedYear[p.id];
+    row.innerHTML = `
+      <div class="quota-title"><b>NISA生涯枠 — ${p.label}</b>
+        <span>${fmtMan(cap.total)} / 1,800万円 ${reached ? `（${reached}年目に上限到達）` : ""}</span></div>
+      <div class="frames">${frames}</div>`;
+    el.appendChild(row);
+
+    if (p.ideco > 0){
+      const start = r.firstAlloc["ideco_"+p.id] || 0;
+      const pct = Math.round(start / p.ideco * 100);
+      const irow = document.createElement("div");
+      irow.className = "quota-row";
+      irow.innerHTML = `
+        <div class="quota-title"><b>iDeCo月額限度 — ${p.label}</b></div>
+        <div class="quota-ideco">
+          <div class="bar"><div style="width:${pct}%"></div></div>
+          <div class="pct">${fmtYen(start)} / ${fmtYen(p.ideco)}（${pct}%）</div>
+        </div>`;
+      el.appendChild(irow);
+    }
+  }
+  document.getElementById("quotaNote").textContent = "1マス＝100万円（薄緑：つみたて枠／濃緑：成長枠）";
+}
+
+function renderAdvice(r){
+  const el = document.getElementById("advice");
+  const persons = r.persons;
+  const top = [...persons].sort((a,b)=>b.mr-a.mr)[0];
+  const items = [];
+
+  if (top.mr > 0){
+    const perMan = Math.round(120000 * top.mr);
+    items.push(`世帯で限界税率が最も高いのは<b>${top.label}（約${(top.mr*100).toFixed(1)}%）</b>。iDeCoに月1万円拠出するごとに年間約<b>${perMan.toLocaleString()}円</b>の税負担が軽くなるため、${S.mode==="liquid" ? "流動性重視でもiDeCoを一部併用する価値があります" : "iDeCoを優先的に埋めています"}。`);
+  }
+  const zeroP = persons.find(p => p.ideco > 0 && p.mr <= 0);
+  if (zeroP){
+    items.push(`${zeroP.label}は課税所得がないため、iDeCoの<b>所得控除メリットはありません</b>。運用益非課税は同じで流動性に勝るNISAを優先し、iDeCoはNISA枠を使い切った後の受け皿にしています。`);
+  }
+  if (S.kids > 0){
+    items.push(`お子さま${S.kids}人の教育費（大学進学まで1人あたり目安1,000〜2,500万円）は<b>60歳まで引き出せないiDeCoでは賄えません</b>。教育資金に充てる分はNISA側で確保してください。${S.mode==="tax" ? "教育費のピークが近い場合は「流動性重視」も比較を。" : ""}`);
+  }
+  for (const p of persons){
+    if (r.capReachedYear[p.id]){
+      items.push(`${p.label}のNISA生涯枠1,800万円は<b>${r.capReachedYear[p.id]}年目に上限到達</b>。以降の資金は自動的に${persons.length>1 ? "他の非課税枠→" : ""}課税口座へ振り替えて計算しています。`);
+    }
+  }
+  if (S.reform2027){
+    items.push(`2027年改正を反映中：会社員・公務員のiDeCo限度額を月6.2万円で計算しています（企業年金の事業主掛金がある場合、実際の上限はその分低くなります）。`);
+  }
+  if (S.lump > 0){
+    const pace = 3600000 * r.persons.length;
+    items.push(`一括投資額<b>${fmtMan(S.lump)}</b>は初月から課税口座で運用しつつ、NISAの空き枠へ年間最大${fmtMan(pace)}のペースで移し替えます。移し替え時には課税口座で生じた含み益に20.315%課税されるため、<b>完全な非課税移行にはなりません</b>（早く枠へ移すほど有利）。`);
+  }
+  if (S.age < 65 && S.age + S.years > 65 && r.persons.some(p => p.ideco > 0)){
+    const y65 = 65 - S.age;
+    items.push(`iDeCoの掛金拠出は65歳になるまでとして計算しています（<b>${y65}年目まで</b>）。以降の拠出分は自動的にNISA・課税口座へ振り替えます。残高の運用は継続します。`);
+  }
+  const adv = r.netPlan - r.netBase;
+  items.push(`同じ金額をすべて課税口座で運用した場合と比べ、非課税枠と所得控除の活用で実質<b>約${fmtMan(adv)}</b>の差がつく計算です（${S.years}年間・年率${(S.ret*100).toFixed(1)}%の仮定）。`);
+
+  el.innerHTML = items.map(t => `<p>・${t}</p>`).join("");
+}
+
+const MODE_HINTS = {
+  tax:"iDeCo（所得控除あり）→ NISA → 課税口座の順に配分。節税効果は最大ですが、iDeCo分は60歳まで引き出せません。",
+  balance:"最も税率の高い一人のiDeCoだけ埋め、残りはNISAへ。節税と流動性の中間です。",
+  liquid:"いつでも引き出せるNISAを最優先。教育費など中期の支出予定が大きい世帯向けです。",
+};
+
+/* ================= wiring ================= */
+function paintRange(input){
+  const pct = (input.value - input.min) / (input.max - input.min) * 100;
+  input.style.setProperty("--fill", pct + "%");
+}
+function syncLabels(){
+  document.getElementById("incomeSelfVal").textContent = fmtMan(S.incomeSelf);
+  document.getElementById("incomeSpouseVal").textContent = S.incomeSpouse > 0 ? fmtMan(S.incomeSpouse) : "収入なし";
+  document.getElementById("budgetVal").textContent = fmtYen(S.budget);
+  document.getElementById("lumpVal").textContent = S.lump > 0 ? fmtMan(S.lump) : "なし";
+  document.getElementById("ageVal").textContent = S.age + "歳";
+  document.getElementById("retVal").textContent = (S.ret*100).toFixed(1) + "%";
+  document.getElementById("kidsNum").textContent = S.kids + "人";
+  document.getElementById("modeHint").textContent = MODE_HINTS[S.mode];
+  document.getElementById("spouseFields").classList.toggle("off", !S.hasSpouse);
+}
+function recalc(){
+  syncLabels();
+  const r = simulate();
+  renderAlloc(r); renderCards(r); renderChart(r); renderQuota(r); renderAdvice(r);
+}
+
+function bindRange(id, key, mul){
+  const el = document.getElementById(id);
+  const f = () => { S[key] = Number(el.value) * (mul||1); paintRange(el); recalc(); };
+  el.addEventListener("input", f); paintRange(el);
+}
+bindRange("incomeSelf","incomeSelf");
+bindRange("incomeSpouse","incomeSpouse");
+bindRange("budget","budget");
+bindRange("lump","lump");
+bindRange("age","age");
+document.getElementById("ret").addEventListener("input", e => { S.ret = Number(e.target.value)/100; paintRange(e.target); recalc(); });
+paintRange(document.getElementById("ret"));
+
+document.getElementById("jobSelf").addEventListener("change", e => { S.jobSelf = e.target.value; recalc(); });
+document.getElementById("jobSpouse").addEventListener("change", e => { S.jobSpouse = e.target.value; recalc(); });
+document.getElementById("hasSpouse").addEventListener("change", e => { S.hasSpouse = e.target.checked; recalc(); });
+document.getElementById("reform2027").addEventListener("change", e => { S.reform2027 = e.target.checked; recalc(); });
+
+document.getElementById("kidsMinus").addEventListener("click", () => { S.kids = Math.max(0, S.kids-1); recalc(); });
+document.getElementById("kidsPlus").addEventListener("click", () => { S.kids = Math.min(6, S.kids+1); recalc(); });
+
+for (const seg of [["yearsSeg","y","years",Number],["modeSeg","m","mode",String]]){
+  const [segId, attr, key, cast] = seg;
+  const box = document.getElementById(segId);
+  box.querySelectorAll("button").forEach(btn => btn.addEventListener("click", () => {
+    box.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed","false"));
+    btn.setAttribute("aria-pressed","true");
+    S[key] = cast(btn.dataset[attr]);
+    recalc();
+  }));
+}
+
+recalc();
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+}
+</script>
+</body>
+</html>
