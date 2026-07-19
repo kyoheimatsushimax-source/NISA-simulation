@@ -283,6 +283,11 @@ footer{margin-top:34px;font-size:11px;color:var(--ink-soft);border-top:1px solid
       <input type="range" id="budget" min="0" max="600000" step="5000" value="150000">
     </div>
     <div class="field">
+        <label for="bonusAnnual">ボーナスからの投資額（年間）<span class="val" id="bonusAnnualVal"></span></label>
+        <input type="range" id="bonusAnnual" min="0" max="3000000" step="50000" value="0">
+        <div class="hint">6月と12月に半額ずつ投入します。その月のNISA・iDeCoの空き枠に充当し、入り切らない分は課税口座で待機して翌年初の成長投資枠スポット購入に移し替えます。住居費・教育費で赤字の月はまず不足の穴埋めに充てます。</div>
+      </div>
+      <div class="field">
       <label for="lump">一括投資額（開始時に投入）<span class="val" id="lumpVal"></span></label>
       <input type="range" id="lump" min="0" max="30000000" step="100000" value="0">
       <div class="hint">初月に課税口座で運用を始め、成長投資枠へは各年初にスポット購入（年240万円/人）、つみたて枠・iDeCoへは毎月の設定額として自動で移し替えます。</div>
@@ -441,6 +446,7 @@ footer{margin-top:34px;font-size:11px;color:var(--ink-soft);border-top:1px solid
         ・2027年のiDeCo限度額引上げは2025年度税制改正大綱等に基づく予定値であり、企業年金加入者は「月6.2万円から事業主掛金を控除した額」が実際の上限です（本ツールでは事業主掛金ゼロと仮定）。<br>
         ・一括投資額は初月に課税口座へ全額投入し、成長投資枠は年間枠の範囲でスポット購入、つみたて枠・iDeCoは月次で移し替える前提です。つみたて投資枠は積立買付のみのため、ボーナス設定等による増額は考慮していません。移し替え時は含み益部分に20.315%課税した後の金額を枠へ投入します。<br>
         ・iDeCoの掛金拠出は本人・配偶者とも65歳になるまでとし、年齢は本人と同一と仮定しています。受給開始年齢や拠出可能年齢の個別要件は反映していません。<br>
+        ・ボーナスからの投資額は毎年6月・12月に半額ずつ投入する簡略化を置いています。<br>
         ・住宅購入は指定年の年末に実行し、元利均等返済（ボーナス返済なし・金利固定・繰上返済なし）で計算しています。諸費用率（新築4%／中古8%）は概算です。購入後は「返済額＋維持費−現在の家賃」の差額を毎月の投資可能額から増減し、教育費の増加分も同様に差し引きます。不足時は課税口座→NISAの順で売却して充当し、NISA売却による枠の復活は考慮していません。売却時に「投資元本」の累計線は減算しないため、購入後は元本線が実際の投下資本より大きく表示されることがあります。全額課税口座の比較線（実質欄）への取り崩し反映は税引の簡略化を含む近似です。住宅ローン控除・団信・登記等の個別費用・不動産価格の変動・家賃の変動は反映していません。返済負担率は額面年収に対する年間返済額の割合です。<br>
         ・本ツールは情報提供を目的とした概算シミュレーションであり、特定の金融商品の勧誘や投資助言・税務助言ではありません。実際の判断にあたっては最新の制度と専門家の助言をご確認ください。
       </div>
@@ -462,6 +468,7 @@ const S = {
   jobSpouse: "kaishain_nashi",
   kids: 2,
   budget: 150000,
+  bonusAnnual: 0,    // ボーナスからの年間投資額（6月・12月に半額ずつ）
   lump: 0,
   age: 40,
   ret: 0.05,
@@ -724,6 +731,8 @@ function simulate(){
 
     /* ---- ライフイベント：住宅・教育のキャッシュフロー ---- */
     let eff = S.budget;
+    const im = ((m - 1) % 12) + 1;
+    if (S.bonusAnnual > 0 && (im === 6 || im === 12)) eff += S.bonusAnnual / 2;
     if (life){
       const eduActive = S.eduMonthly > 0 && m > S.eduStart*12 && m <= eduEndM;
       if (eduActive){
@@ -1146,6 +1155,7 @@ function syncLabels(){
   document.getElementById("eduYearsVal").textContent = S.eduYears + "年間";
   document.getElementById("eduMonthlyVal").textContent = S.eduMonthly > 0 ? fmtYen(S.eduMonthly) : "なし";
   document.getElementById("lifeFields").classList.toggle("off", !S.lifeOn);
+  document.getElementById("bonusAnnualVal").textContent = S.bonusAnnual > 0 ? fmtMan(S.bonusAnnual) + "／年" : "なし";
 }
 function recalc(){
   syncLabels();
@@ -1167,6 +1177,7 @@ bindRange("age","age");
 document.getElementById("ret").addEventListener("input", e => { S.ret = Number(e.target.value)/100; paintRange(e.target); recalc(); });
 paintRange(document.getElementById("ret"));
 
+bindRange("bonusAnnual","bonusAnnual");
 bindRange("buyYear","buyYear");
 bindRange("price","price");
 bindRange("loanYears","loanYears");
@@ -1215,6 +1226,7 @@ function applyStateToInputs(){
   S.incomeSpouse = setR("incomeSpouse", S.incomeSpouse);
   S.budget       = setR("budget",       S.budget);
   S.lump         = setR("lump",         S.lump);
+  S.bonusAnnual  = setR("bonusAnnual",  S.bonusAnnual);
   S.age          = setR("age",          S.age);
   S.ret          = setR("ret",          S.ret*100)/100;
   S.buyYear      = setR("buyYear",      S.buyYear);
