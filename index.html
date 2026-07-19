@@ -155,6 +155,9 @@ select:focus-visible{outline:2px solid var(--ideco)}
 .card .sub{font-size:10.5px;color:var(--ink-soft);margin-top:3px;line-height:1.45}
 .card.gold .v{color:var(--gold)}
 .card.green .v{color:var(--nisa-g)}
+.card.danger .v{color:var(--danger)}
+.resetbtn{width:100%;margin-top:10px;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--danger);font-size:12px;letter-spacing:.04em;cursor:pointer}
+.resetbtn:hover{background:#FBF3EF}
 
 /* ---------- chart ---------- */
 .chart-wrap{position:relative;height:340px;margin-top:10px}
@@ -293,10 +296,74 @@ footer{margin-top:34px;font-size:11px;color:var(--ink-soft);border-top:1px solid
       <label>シミュレーション期間</label>
       <div class="seg" id="yearsSeg" role="group" aria-label="期間">
         <button data-y="10">10年</button>
-        <button data-y="20" aria-pressed="true">20年</button>
-        <button data-y="30">30年</button>
+        <button data-y="20">20年</button>
+        <button data-y="30" aria-pressed="true">30年</button>
         <button data-y="40">40年</button>
         <button data-y="50">50年</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-label">ライフイベント（住宅・教育）</div>
+    <div class="toggle-row field">
+      <span>住宅購入・教育費を反映</span>
+      <label class="switch"><input type="checkbox" id="lifeOn" checked><span class="knob"></span></label>
+    </div>
+    <div class="spouse-fields" id="lifeFields">
+      <div class="field">
+        <label for="buyYear">住宅購入の時期<span class="val" id="buyYearVal"></span></label>
+        <input type="range" id="buyYear" min="1" max="20" step="1" value="5">
+      </div>
+      <div class="field">
+        <label for="price">物件価格<span class="val" id="priceVal"></span></label>
+        <input type="range" id="price" min="30000000" max="150000000" step="1000000" value="70000000">
+      </div>
+      <div class="field">
+        <label>物件種別（諸費用率の目安）</label>
+        <div class="seg" id="buildSeg" role="group" aria-label="物件種別">
+          <button data-b="new" aria-pressed="true">新築<br>(約4%)</button>
+          <button data-b="used">中古<br>(約8%)</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="loanRate">ローン金利（年率）<span class="val" id="loanRateVal"></span></label>
+        <input type="range" id="loanRate" min="0.5" max="4" step="0.1" value="2">
+      </div>
+      <div class="field">
+        <label for="loanYears">返済期間<span class="val" id="loanYearsVal"></span></label>
+        <input type="range" id="loanYears" min="20" max="40" step="5" value="35">
+      </div>
+      <div class="field">
+        <label for="cashReserve">購入用の別枠現金（財形など）<span class="val" id="cashReserveVal"></span></label>
+        <input type="range" id="cashReserve" min="0" max="30000000" step="500000" value="5000000">
+        <div class="hint">運用資産とは別に用意している現金。まず諸費用に充て、残りを頭金にします。諸費用に不足する分と「追加頭金」は、購入時に課税口座→NISAの順で運用資産を売却して充当します。</div>
+      </div>
+      <div class="field">
+        <label for="extraDown">運用資産からの追加頭金<span class="val" id="extraDownVal"></span></label>
+        <input type="range" id="extraDown" min="0" max="30000000" step="500000" value="0">
+      </div>
+      <div class="field">
+        <label for="rentNow">現在の家賃（月）<span class="val" id="rentNowVal"></span></label>
+        <input type="range" id="rentNow" min="0" max="500000" step="5000" value="150000">
+        <div class="hint">購入後は「返済＋維持費 − 家賃」の差額分だけ、毎月の投資可能額が自動で増減します。</div>
+      </div>
+      <div class="field">
+        <label for="runCost">管理費・修繕・固定資産税（月）<span class="val" id="runCostVal"></span></label>
+        <input type="range" id="runCost" min="0" max="100000" step="5000" value="40000">
+      </div>
+      <div class="field" style="margin-top:14px">
+        <label for="eduStart">教育費の増加開始<span class="val" id="eduStartVal"></span></label>
+        <input type="range" id="eduStart" min="0" max="20" step="1" value="6">
+      </div>
+      <div class="field">
+        <label for="eduYears">教育費の増加期間<span class="val" id="eduYearsVal"></span></label>
+        <input type="range" id="eduYears" min="1" max="16" step="1" value="6">
+      </div>
+      <div class="field">
+        <label for="eduMonthly">追加教育費（月・世帯合計）<span class="val" id="eduMonthlyVal"></span></label>
+        <input type="range" id="eduMonthly" min="0" max="300000" step="5000" value="80000">
+        <div class="hint">私立中高なら公立比で月8〜12万円程度が目安。増加分は投資可能額から差し引き、不足時は課税口座→NISAの順に取り崩します。</div>
       </div>
     </div>
   </div>
@@ -317,6 +384,16 @@ footer{margin-top:34px;font-size:11px;color:var(--ink-soft);border-top:1px solid
     </div>
     <div class="hint">引上げ後：自営業 月7.5万円／会社員・公務員 月6.2万円（事業主掛金ゼロと仮定）。第3号は据置き。</div>
   </div>
+
+  <div class="sec">
+    <div class="sec-label">この端末への保存</div>
+    <div class="toggle-row field">
+      <span>入力値をこの端末に保存</span>
+      <label class="switch"><input type="checkbox" id="saveLocal"><span class="knob"></span></label>
+    </div>
+    <div class="hint">オンにすると入力値がこの端末のブラウザ内（localStorage）にのみ保存され、次回も同じ設定で開きます。サーバーには一切送信されません。オフに戻すと保存済みデータを削除します。</div>
+    <button class="resetbtn" id="resetBtn" type="button">初期値に戻す（保存データも削除）</button>
+  </div>
 </div>
 
 <!-- ================= RESULTS ================= -->
@@ -334,6 +411,12 @@ footer{margin-top:34px;font-size:11px;color:var(--ink-soft);border-top:1px solid
   </div>
 
   <div class="cards" id="cards"></div>
+
+  <div class="panel" id="housingPanel" style="display:none">
+    <div class="result-h">住宅ローン負担チェック <small id="housingNote"></small></div>
+    <div class="cards" id="housingCards" style="margin:0"></div>
+    <div class="advice" id="housingAdvice" style="margin-top:14px"></div>
+  </div>
 
   <div class="panel">
     <div class="result-h">資産推移 <small>年末時点の評価額（税引前）・積み上げ表示</small></div>
@@ -358,6 +441,7 @@ footer{margin-top:34px;font-size:11px;color:var(--ink-soft);border-top:1px solid
         ・2027年のiDeCo限度額引上げは2025年度税制改正大綱等に基づく予定値であり、企業年金加入者は「月6.2万円から事業主掛金を控除した額」が実際の上限です（本ツールでは事業主掛金ゼロと仮定）。<br>
         ・一括投資額は初月に課税口座へ全額投入し、成長投資枠は年間枠の範囲でスポット購入、つみたて枠・iDeCoは月次で移し替える前提です。つみたて投資枠は積立買付のみのため、ボーナス設定等による増額は考慮していません。移し替え時は含み益部分に20.315%課税した後の金額を枠へ投入します。<br>
         ・iDeCoの掛金拠出は本人・配偶者とも65歳になるまでとし、年齢は本人と同一と仮定しています。受給開始年齢や拠出可能年齢の個別要件は反映していません。<br>
+        ・住宅購入は指定年の年末に実行し、元利均等返済（ボーナス返済なし・金利固定・繰上返済なし）で計算しています。諸費用率（新築4%／中古8%）は概算です。購入後は「返済額＋維持費−現在の家賃」の差額を毎月の投資可能額から増減し、教育費の増加分も同様に差し引きます。不足時は課税口座→NISAの順で売却して充当し、NISA売却による枠の復活は考慮していません。売却時に「投資元本」の累計線は減算しないため、購入後は元本線が実際の投下資本より大きく表示されることがあります。全額課税口座の比較線（実質欄）への取り崩し反映は税引の簡略化を含む近似です。住宅ローン控除・団信・登記等の個別費用・不動産価格の変動・家賃の変動は反映していません。返済負担率は額面年収に対する年間返済額の割合です。<br>
         ・本ツールは情報提供を目的とした概算シミュレーションであり、特定の金融商品の勧誘や投資助言・税務助言ではありません。実際の判断にあたっては最新の制度と専門家の助言をご確認ください。
       </div>
     </details>
@@ -381,9 +465,24 @@ const S = {
   lump: 0,
   age: 40,
   ret: 0.05,
-  years: 20,
+  years: 30,
   mode: "tax",
   reform2027: false,
+  saveLocal: false,    // この端末に入力値を保存
+  /* ---- ライフイベント（住宅・教育） ---- */
+  lifeOn: true,
+  buyYear: 5,          // 何年後に購入
+  price: 70000000,     // 物件価格
+  buildType: "new",    // new=諸費用4% / used=8%
+  loanRate: 0.02,      // 年率
+  loanYears: 35,
+  cashReserve: 5000000,// 購入用の別枠現金（財形など・運用資産外）
+  extraDown: 0,        // 運用資産からの追加頭金
+  rentNow: 150000,     // 現在の家賃（月）
+  runCost: 40000,      // 管理費・修繕・固定資産税（月）
+  eduStart: 6,         // 教育費増の開始（年後）
+  eduYears: 6,
+  eduMonthly: 80000,   // 追加教育費（月・世帯）
 };
 
 const IDECO_LIMITS = {
@@ -492,6 +591,39 @@ function allocateCash(buckets, cash){
   return al;
 }
 
+/* ================= formatting ================= */
+const fmtMan = v => {
+  const man = v/10000;
+  if (Math.abs(man) >= 10000) return (man/10000).toLocaleString("ja-JP",{maximumFractionDigits:2}) + "億円";
+  return Math.round(man).toLocaleString("ja-JP") + "万円";
+};
+const fmtYen = v => Math.round(v).toLocaleString("ja-JP") + "円";
+
+/* ================= life events (housing / education) ================= */
+function annuity(P, r, n){
+  if (P <= 0 || n <= 0) return 0;
+  if (r <= 0) return P / n;
+  const k = Math.pow(1 + r, n);
+  return P * r * k / (k - 1);
+}
+function lifePlan(){
+  if (!S.lifeOn) return null;
+  const buyM = S.buyYear * 12;
+  const feeRate = S.buildType === "new" ? 0.04 : 0.08;
+  const fees = S.price * feeRate;
+  const downCash = Math.max(0, S.cashReserve - fees);   // 別枠現金の残りを頭金へ
+  const feeShort = Math.max(0, fees - S.cashReserve);   // 諸費用の不足分（資産から）
+  const down = downCash + S.extraDown;
+  const loan = Math.max(0, S.price - down);
+  const pay = annuity(loan, S.loanRate/12, S.loanYears*12);
+  const withdrawNeed = S.extraDown + feeShort;          // 購入時に運用資産から出す額
+  const world = S.incomeSelf + (S.hasSpouse ? S.incomeSpouse : 0);
+  return { buyM, fees, down, loan, pay, withdrawNeed,
+    ratioWorld: world > 0 ? pay*12/world : 0,
+    ratioSelf:  S.incomeSelf > 0 ? pay*12/S.incomeSelf : 0,
+    multiple:   world > 0 ? loan/world : 0 };
+}
+
 /* ================= simulation ================= */
 function simulate(){
   const persons = personCfg();
@@ -512,6 +644,10 @@ function simulate(){
   const monthsLog = [], events = [];
   let poolActive = false, wasIdecoOpen = true;
 
+  const life = lifePlan();
+  const eduEndM = (S.eduStart + S.eduYears) * 12;
+  let lifeCum = 0, warnedShort = false;
+
   /* proportional-basis sale from the taxable account; returns net proceeds after CGT */
   function sellTaxable(gross){
     const x = Math.min(gross, bal.taxable);
@@ -520,6 +656,28 @@ function simulate(){
     const tax = Math.max(0, x - basisPart) * CGT;
     bal.taxable -= x; taxBasis -= basisPart;
     return x - tax;
+  }
+
+  /* NISA残高からの売却（非課税・枠は復活しない前提） */
+  function sellNisa(need){
+    let got = 0;
+    for (const p of persons){
+      const k = "nisa_"+p.id;
+      const x = Math.min(need - got, Math.max(0, bal[k]));
+      bal[k] -= x; got += x;
+      if (got >= need) break;
+    }
+    return got;
+  }
+
+  /* 運用資産から純額needを引き出す（課税口座→NISAの順）。引き出せた純額を返す */
+  function withdraw(need){
+    const ratio = bal.taxable > 0 ? 1 - Math.max(0, 1 - taxBasis/bal.taxable)*CGT : 1;
+    const gross = bal.taxable > 0 ? Math.min(bal.taxable, need/ratio) : 0;
+    let net = gross > 0 ? sellTaxable(gross) : 0;
+    if (net < need) net += sellNisa(need - net);
+    baseline = Math.max(0, baseline - need); baseBasis = Math.max(0, baseBasis - need);
+    return net;
   }
 
   /* pass 2: move waiting funds in the taxable account into unused tax-advantaged room */
@@ -564,8 +722,44 @@ function simulate(){
     if (wasIdecoOpen && !idecoOpen && persons.some(p => p.ideco > 0)) events.push({m, text:"65歳到達：iDeCoの掛金拠出を終了（残高の運用は継続）"});
     wasIdecoOpen = idecoOpen;
 
+    /* ---- ライフイベント：住宅・教育のキャッシュフロー ---- */
+    let eff = S.budget;
+    if (life){
+      const eduActive = S.eduMonthly > 0 && m > S.eduStart*12 && m <= eduEndM;
+      if (eduActive){
+        eff -= S.eduMonthly; lifeCum += S.eduMonthly;
+        if (m === S.eduStart*12 + 1) events.push({m, text:`教育費の増加期間が開始：月${fmtYen(S.eduMonthly)}を投資より優先して充当`});
+        if (m === eduEndM) events.push({m, text:"教育費の増加期間が終了"});
+      }
+      if (m === life.buyM){
+        events.push({m, text:`住宅購入：物件${fmtMan(S.price)}／頭金${fmtMan(life.down)}・諸費用${fmtMan(life.fees)}／借入${fmtMan(life.loan)}・月々返済${fmtYen(life.pay)}`});
+        if (life.withdrawNeed > 0){
+          lifeCum += life.withdrawNeed;
+          const net = withdraw(life.withdrawNeed);
+          if (net < life.withdrawNeed - 1){
+            events.push({m, text:`購入資金が約${fmtMan(life.withdrawNeed - net)}不足：借入増か物件価格の見直しが必要（不足分は未反映のまま計算）`});
+          }
+        }
+      }
+      if (m >= life.buyM){
+        const loanActive = m < life.buyM + S.loanYears*12;
+        if (m === life.buyM + S.loanYears*12) events.push({m, text:"住宅ローン完済：以降の住居費は維持費のみ"});
+        const delta = (loanActive ? life.pay : 0) + S.runCost - S.rentNow;
+        eff -= delta;
+        if (delta > 0) lifeCum += delta;
+      }
+      if (eff < 0){
+        const deficit = -eff; eff = 0;
+        const net = withdraw(deficit);
+        if (net < deficit - 1 && !warnedShort){
+          warnedShort = true;
+          events.push({m, text:"住居費・教育費が投資可能額と運用資産の両方を上回りました（不足分は未反映）"});
+        }
+      }
+    }
+
     const buckets = buildBuckets(persons, caps, idecoOpen);
-    const alloc = allocateCash(buckets, S.budget);
+    const alloc = allocateCash(buckets, eff);
     const cashSnap = {...alloc};
     bal.taxable += alloc.taxable; taxBasis += alloc.taxable;
     drainPool(buckets, alloc);
@@ -596,8 +790,8 @@ function simulate(){
         events.push({m, text:`${p.label}のNISA生涯枠1,800万円が上限到達`});
       }
     }
-    principal += S.budget;
-    baseline += S.budget; baseBasis += S.budget;
+    principal += eff;
+    baseline += eff; baseBasis += eff;
 
     if (m % 12 === 0){
       for (const p of persons){
@@ -611,7 +805,7 @@ function simulate(){
         ideco_self: bal.ideco_self || 0,
         ideco_spouse:bal.ideco_spouse||0,
         taxable: bal.taxable,
-        principal, savingsCum,
+        principal, savingsCum, lifeCum,
       });
     }
   }
@@ -623,17 +817,9 @@ function simulate(){
   const baseGain = Math.max(0, baseline - baseBasis);
   const netBase = baseline - baseGain*CGT;
 
-  return {persons, snaps, caps, firstAlloc, capReachedYear, monthsLog, events,
+  return {persons, snaps, caps, firstAlloc, capReachedYear, monthsLog, events, life,
           total, principal, savingsCum, netPlan, netBase, gain: total - principal};
 }
-
-/* ================= formatting ================= */
-const fmtMan = v => {
-  const man = v/10000;
-  if (Math.abs(man) >= 10000) return (man/10000).toLocaleString("ja-JP",{maximumFractionDigits:2}) + "億円";
-  return Math.round(man).toLocaleString("ja-JP") + "万円";
-};
-const fmtYen = v => Math.round(v).toLocaleString("ja-JP") + "円";
 
 /* ================= rendering ================= */
 const COLORS = {
@@ -714,6 +900,9 @@ function renderChart(r){
       borderColor:"#1A2536", borderDash:[6,4], borderWidth:1.5, pointRadius:0, fill:false, order:1 },
     { label:"累計節税額", data:r.snaps.map(s=>Math.round(s.savingsCum/10000)),
       borderColor:"#B8892E", borderWidth:2, pointRadius:0, fill:false, order:0, tension:.25 },
+    ...(S.lifeOn && r.snaps.some(s => (s.lifeCum||0) > 0) ? [{
+      label:"住居・教育の追加負担累計", data:r.snaps.map(s=>Math.round((s.lifeCum||0)/10000)),
+      borderColor:"#B4562E", borderDash:[3,3], borderWidth:1.5, pointRadius:0, fill:false, order:0, tension:.25 }] : []),
   ];
   const opts = {
     responsive:true, maintainAspectRatio:false, animation:{duration:250},
@@ -890,6 +1079,40 @@ function renderAdvice(r){
   el.innerHTML = items.map(t => `<p>・${t}</p>`).join("");
 }
 
+function renderHousing(r){
+  const panel = document.getElementById("housingPanel");
+  const life = r.life;
+  if (!life || life.buyM > S.years*12){ panel.style.display = "none"; return; }
+  panel.style.display = "";
+  const monthly = life.pay + S.runCost;
+  const cls = x => x <= 0.25 ? "green" : (x <= 0.35 ? "gold" : "danger");
+  const pct = x => (x*100).toFixed(1) + "%";
+  const judge = x => x <= 0.25 ? "健全（25%以内）" : (x <= 0.35 ? "要注意（25%超）" : "過大（35%超）");
+  document.getElementById("housingCards").innerHTML = `
+    <div class="card"><div class="k">月々の住居費</div>
+      <div class="v">${fmtYen(monthly)}</div>
+      <div class="sub">返済 ${fmtYen(life.pay)} ＋ 維持費 ${fmtYen(S.runCost)}</div></div>
+    <div class="card"><div class="k">借入額</div>
+      <div class="v">${fmtMan(life.loan)}</div>
+      <div class="sub">世帯年収の${life.multiple.toFixed(1)}倍（目安：6倍以内）</div></div>
+    <div class="card ${cls(life.ratioWorld)}"><div class="k">返済負担率（世帯）</div>
+      <div class="v">${pct(life.ratioWorld)}</div>
+      <div class="sub">${judge(life.ratioWorld)}</div></div>
+    <div class="card ${cls(life.ratioSelf)}"><div class="k">返済負担率（本人単独）</div>
+      <div class="v">${pct(life.ratioSelf)}</div>
+      <div class="sub">${judge(life.ratioSelf)}・配偶者の収入が止まった場合の耐性</div></div>`;
+  const msgs = [];
+  if (life.ratioWorld > 0.25) msgs.push("世帯の返済負担率が25%を超えています。物件価格を下げるか頭金を増やすと、NISA積立を維持しやすくなります。");
+  else msgs.push("世帯の返済負担率は健全圏です。積立と返済の並走が見込めます。");
+  if (life.ratioSelf > 0.35) msgs.push("<b>本人単独では負担率が35%を超えます。</b>配偶者の収入減少時に積立停止・家計逼迫のリスクが高い水準です。");
+  else if (life.ratioSelf > 0.25) msgs.push("本人単独では負担率が25%を超えます。配偶者の収入が一時的に減る局面では積立の縮小が必要になる可能性があります。");
+  if (S.cashReserve < life.fees) msgs.push(`別枠現金が諸費用（約${fmtMan(life.fees)}）に不足しています。不足分は購入時に運用資産を取り崩して補填する計算です。`);
+  if (life.withdrawNeed > 0) msgs.push(`購入時に運用資産から約${fmtMan(life.withdrawNeed)}を取り崩す設定です（課税口座→NISAの順）。`);
+  document.getElementById("housingAdvice").innerHTML = msgs.map(t => `<p>・${t}</p>`).join("");
+  document.getElementById("housingNote").textContent =
+    `${S.buyYear}年後に購入・金利${(S.loanRate*100).toFixed(1)}%・${S.loanYears}年返済の想定`;
+}
+
 const MODE_HINTS = {
   tax:"iDeCo（所得控除あり）→ NISA → 課税口座の順に配分。節税効果は最大ですが、iDeCo分は60歳まで引き出せません。",
   balance:"最も税率の高い一人のiDeCoだけ埋め、残りはNISAへ。節税と流動性の中間です。",
@@ -911,11 +1134,24 @@ function syncLabels(){
   document.getElementById("kidsNum").textContent = S.kids + "人";
   document.getElementById("modeHint").textContent = MODE_HINTS[S.mode];
   document.getElementById("spouseFields").classList.toggle("off", !S.hasSpouse);
+  document.getElementById("buyYearVal").textContent = S.buyYear + "年後";
+  document.getElementById("priceVal").textContent = fmtMan(S.price);
+  document.getElementById("loanRateVal").textContent = (S.loanRate*100).toFixed(1) + "%";
+  document.getElementById("loanYearsVal").textContent = S.loanYears + "年";
+  document.getElementById("cashReserveVal").textContent = S.cashReserve > 0 ? fmtMan(S.cashReserve) : "なし";
+  document.getElementById("extraDownVal").textContent = S.extraDown > 0 ? fmtMan(S.extraDown) : "なし";
+  document.getElementById("rentNowVal").textContent = fmtYen(S.rentNow);
+  document.getElementById("runCostVal").textContent = fmtYen(S.runCost);
+  document.getElementById("eduStartVal").textContent = S.eduStart === 0 ? "開始時から" : S.eduStart + "年後から";
+  document.getElementById("eduYearsVal").textContent = S.eduYears + "年間";
+  document.getElementById("eduMonthlyVal").textContent = S.eduMonthly > 0 ? fmtYen(S.eduMonthly) : "なし";
+  document.getElementById("lifeFields").classList.toggle("off", !S.lifeOn);
 }
 function recalc(){
   syncLabels();
   const r = simulate();
-  renderAlloc(r); renderPlan(r); renderCards(r); renderChart(r); renderQuota(r); renderAdvice(r);
+  renderAlloc(r); renderPlan(r); renderCards(r); renderHousing(r); renderChart(r); renderQuota(r); renderAdvice(r);
+  if (typeof persist === "function") persist();
 }
 
 function bindRange(id, key, mul){
@@ -931,6 +1167,20 @@ bindRange("age","age");
 document.getElementById("ret").addEventListener("input", e => { S.ret = Number(e.target.value)/100; paintRange(e.target); recalc(); });
 paintRange(document.getElementById("ret"));
 
+bindRange("buyYear","buyYear");
+bindRange("price","price");
+bindRange("loanYears","loanYears");
+bindRange("cashReserve","cashReserve");
+bindRange("extraDown","extraDown");
+bindRange("rentNow","rentNow");
+bindRange("runCost","runCost");
+bindRange("eduStart","eduStart");
+bindRange("eduYears","eduYears");
+bindRange("eduMonthly","eduMonthly");
+document.getElementById("loanRate").addEventListener("input", e => { S.loanRate = Number(e.target.value)/100; paintRange(e.target); recalc(); });
+paintRange(document.getElementById("loanRate"));
+document.getElementById("lifeOn").addEventListener("change", e => { S.lifeOn = e.target.checked; recalc(); });
+
 document.getElementById("jobSelf").addEventListener("change", e => { S.jobSelf = e.target.value; recalc(); });
 document.getElementById("jobSpouse").addEventListener("change", e => { S.jobSpouse = e.target.value; recalc(); });
 document.getElementById("hasSpouse").addEventListener("change", e => { S.hasSpouse = e.target.checked; recalc(); });
@@ -939,7 +1189,7 @@ document.getElementById("reform2027").addEventListener("change", e => { S.reform
 document.getElementById("kidsMinus").addEventListener("click", () => { S.kids = Math.max(0, S.kids-1); recalc(); });
 document.getElementById("kidsPlus").addEventListener("click", () => { S.kids = Math.min(6, S.kids+1); recalc(); });
 
-for (const seg of [["yearsSeg","y","years",Number],["modeSeg","m","mode",String]]){
+for (const seg of [["yearsSeg","y","years",Number],["modeSeg","m","mode",String],["buildSeg","b","buildType",String]]){
   const [segId, attr, key, cast] = seg;
   const box = document.getElementById(segId);
   box.querySelectorAll("button").forEach(btn => btn.addEventListener("click", () => {
@@ -951,6 +1201,74 @@ for (const seg of [["yearsSeg","y","years",Number],["modeSeg","m","mode",String]
 }
 
 recalc();
+
+/* ================= この端末への保存（localStorage） ================= */
+const STORE_KEY = "nisa-sim-settings-v1";
+
+function persist(){
+  try{ if (S.saveLocal) localStorage.setItem(STORE_KEY, JSON.stringify(S)); }catch(e){}
+}
+
+function applyStateToInputs(){
+  const setR = (id, v) => { const el = document.getElementById(id); el.value = v; paintRange(el); return Number(el.value); };
+  S.incomeSelf   = setR("incomeSelf",   S.incomeSelf);
+  S.incomeSpouse = setR("incomeSpouse", S.incomeSpouse);
+  S.budget       = setR("budget",       S.budget);
+  S.lump         = setR("lump",         S.lump);
+  S.age          = setR("age",          S.age);
+  S.ret          = setR("ret",          S.ret*100)/100;
+  S.buyYear      = setR("buyYear",      S.buyYear);
+  S.price        = setR("price",        S.price);
+  S.loanRate     = setR("loanRate",     S.loanRate*100)/100;
+  S.loanYears    = setR("loanYears",    S.loanYears);
+  S.cashReserve  = setR("cashReserve",  S.cashReserve);
+  S.extraDown    = setR("extraDown",    S.extraDown);
+  S.rentNow      = setR("rentNow",      S.rentNow);
+  S.runCost      = setR("runCost",      S.runCost);
+  S.eduStart     = setR("eduStart",     S.eduStart);
+  S.eduYears     = setR("eduYears",     S.eduYears);
+  S.eduMonthly   = setR("eduMonthly",   S.eduMonthly);
+  document.getElementById("jobSelf").value = S.jobSelf;
+  document.getElementById("jobSpouse").value = S.jobSpouse;
+  document.getElementById("hasSpouse").checked = S.hasSpouse;
+  document.getElementById("reform2027").checked = S.reform2027;
+  document.getElementById("lifeOn").checked = S.lifeOn;
+  document.getElementById("saveLocal").checked = S.saveLocal;
+  const seg = (id, attr, val) => {
+    document.getElementById(id).querySelectorAll("button").forEach(b =>
+      b.setAttribute("aria-pressed", String(b.dataset[attr]) === String(val) ? "true" : "false"));
+  };
+  seg("yearsSeg","y",S.years); seg("modeSeg","m",S.mode); seg("buildSeg","b",S.buildType);
+}
+
+(function loadSaved(){
+  let d = null;
+  try{ d = JSON.parse(localStorage.getItem(STORE_KEY) || "null"); }catch(e){}
+  if (!d || !d.saveLocal) return;
+  for (const k in S){ if (k in d && typeof d[k] === typeof S[k]) S[k] = d[k]; }
+  /* 保存データの妥当性チェック（不正値は初期値へ） */
+  S.kids = Math.max(0, Math.min(6, Math.round(Number(S.kids) || 0)));
+  if (!["tax","balance","liquid"].includes(S.mode)) S.mode = "tax";
+  if (!["new","used"].includes(S.buildType)) S.buildType = "new";
+  if (!(S.jobSelf in IDECO_LIMITS)) S.jobSelf = "kaishain_ari";
+  if (!(S.jobSpouse in IDECO_LIMITS)) S.jobSpouse = "kaishain_nashi";
+  if (![10,20,30,40,50].includes(S.years)) S.years = 30;
+  S.saveLocal = true;
+  applyStateToInputs();
+  recalc();
+})();
+
+document.getElementById("saveLocal").addEventListener("change", e => {
+  S.saveLocal = e.target.checked;
+  try{
+    if (S.saveLocal) localStorage.setItem(STORE_KEY, JSON.stringify(S));
+    else localStorage.removeItem(STORE_KEY);
+  }catch(err){}
+});
+document.getElementById("resetBtn").addEventListener("click", () => {
+  try{ localStorage.removeItem(STORE_KEY); }catch(err){}
+  location.reload();
+});
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(()=>{}));

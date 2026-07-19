@@ -1,4 +1,4 @@
-const CACHE = "nisa-ideco-v2";
+const CACHE = "nisa-ideco-v4";
 const ASSETS = [
   "./",
   "./index.html",
